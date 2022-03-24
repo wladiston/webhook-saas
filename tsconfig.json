@@ -1,0 +1,19 @@
+{
+  "include": ["src/**/*.ts"],
+  "compilerOptions": {
+    "declaration": true,
+    "lib": ["ES2019"],
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "target": "ES2019",
+    "strict": true,
+
+    // optional - in general it's a good practice to decouple declaration files from your actual transpiled JavaScript files
+    "declarationDir": "dist/dts",
+
+    // optional if you're using babel to transpile TS -> JS
+    "emitDeclarationOnly": true
+  }
+}
