@@ -1,93 +1,159 @@
-# Project Title
+# Webhook for SaaS 💘
 
-One Paragraph of the project description
+This project is intended to provide some useful utilities for implementing a webhook solution for your SaaS. This client can be used in *any* Node.js or TypeScript backend application.
 
-Initially appeared on
-[gist](https://gist.github.com/PurpleBooth/109311bb0361f32d87a2). But the page
-cannot open anymore so that is why I have moved it here.
+## Features
 
-## Getting Started
+- [x] Support for versioning
+- [x] Multiple URLs
+- [x] Sandbox and production environment
+- [x] Support for subscribe to internal events
+- [] Retry failed attempts
 
-These instructions will give you a copy of the project up and running on your
-local machine for development and testing purposes. See deployment for notes on
-deploying the project on a live system.
+## Installing
 
-### Prerequisites
+```bash
+npm i webhook-saas
 
-Requirements for the software and other tools to build, test and push
+# or using yarn
+yarn add webhook-saas
+```
 
-- [Example 1](https://www.example.com)
-- [Example 2](https://www.example.com)
+## Usage
 
-### Installing
+```tsx
+import {WebhookClient} from 'webhook-sass'
 
-A step by step series of examples that tell you how to get a development
-environment running
+// Initialize the webhooks
+const webhooks = new WebhookClient({
+  api_version: '2020-08-27',
+  hooks: [
+    {
+      url: 'https://user-webhook1....',
+      events: ['did_something'],
+    },
+    {
+      url: 'https://user-webhook2....',
+      events: ['something_else'],
+    },
+  ],
+  mode: 'sandbox',
+  secret: 'user-is-a-secret',
+  name: 'EatingDots',
+})
 
-Say what the step will be
+// add more as you wish...
+webhooks.add(
+  'https://afraid-catfish-7.hooks.n8n.cloud/webhook-test/59534d6e-d946-4803-8ea8-bda7c4a93682',
+  ['did_something'],
+)
 
-    Give the example
+webooks.$onDone((url, body) => {}
 
-And repeat
+// trigger the event passing any data
+webhooks.trigger('did_something', {
+  name: 'John Doe',
+  age: 42,
+})
+```
 
-    until finished
+All requests will be called as a `POST` method passing the following headers
 
-End with an example of getting some data out of the system or using it for a
-little demo
+- `Content-Type: application/json`
+- `X-Signature: <SIGNATURE>` or `X-[name]-Signature: <SIGNATURE>`
+- `X-Environment: production`
 
-## Running the tests
+and the body will be sent in the following format
 
-Explain how to run the automated tests for this system
+```json
+{
+  "id": "8a54a77b-3f6c-448e-9543-a16dab096989",
+  "created": 1648135876829,
+  "idempotency_key": "d572e209-4292-4243-b53b-2c6bad7a8bfd",
+  "api_version": "2020-08-27",
+  "type": "event-triggered",
+  "data": <DATA_SENT>
+}
+```
 
-### Sample Tests
+### Webhook Security
 
-Explain what these tests test and why
+Webhook messages are signed so that your app can verify that the sender is the original sender. Webhooks requests contain an `X-Signature` header. The value of this field is a lowercased hexadecimal HMAC signature of the webhook HTTP request body, using the client secret as a key and SHA256 as the hash function.
 
-    Give an example
+Python Example
 
-### Style test
+```
+digester = hmac.new(secret, webhook_body, hashlib.sha256)
+return digester.hexdigest()
+```
 
-Checks if the best practices and the right coding style has been used.
+Optionally you can use the helper functions to help you create secrets and validate the signature
 
-    Give an example
+```tsx
+import {createSecret} from 'webhook-sass'
 
-## Deployment
+// useful if you want to generate a client secret 
+const secret = createSecret()
 
-Add additional notes to deploy this on a live system
+...
+//
+import {verifySignature} from 'webhook-sass'
 
-## Built With
+const valid = verifySignature(secret: string, signature: string, body: string)
+```
 
-- [Contributor Covenant](https://www.contributor-covenant.org/) - Used for the
-  Code of Conduct
-- [Creative Commons](https://creativecommons.org/) - Used to choose the license
+## Endpoint example
 
-## Contributing
+```tsx
+// This is your test secret API key.
+const webhook = require('webhook-saas')
+const endpointSecret = '...';
+const express = require('express');
+const app = express();
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of
-conduct, and the process for submitting pull requests to us.
+app.post('/webhook', express.raw({type: 'application/json'}), (request, response) => {
+  let event = request.body;
+  
+  // Only verify the event if you have an endpoint secret defined.
+  // Otherwise use the basic event deserialized with JSON.parse
+  if (endpointSecret) {
+    // Get the signature sent by Stripe
+    const signature = request.headers['X-Signature'];
+		const valid = webhook.verifySignature(
+        endpointSecret,
+        signature,
+        request.body
+      );
 
-## Versioning
+    if(!valid){
+		try {
+      console.log(`⚠️  Webhook signature verification failed.`, err.message);
+      return response.sendStatus(400);
+    }
+  }
 
-We use [Semantic Versioning](http://semver.org/) for versioning. For the
-versions available, see the
-[tags on this repository](https://github.com/PurpleBooth/a-good-readme-template/tags).
+  // Handle the event
+  switch (event.type) {
+    case 'myevent.succeeded':
+      const data = event.data;
+      console.log(`myevent.succeeded was successful!`, data);
+      break;
+    default:
+      // Unexpected event type
+      console.log(`Unhandled event type ${event.type}.`);
+  }
+
+  // Return a 200 response to acknowledge receipt of the event
+  response.send();
+});
+
+app.listen(4242, () => console.log('Running on port 4242'));
+```
 
 ## Authors
 
-- **Billie Thompson** - _Provided README Template_ -
-  [PurpleBooth](https://github.com/PurpleBooth)
-
-See also the list of
-[contributors](https://github.com/PurpleBooth/a-good-readme-template/contributors)
-who participated in this project.
-
-## License
-
-This project is licensed under the [CC0 1.0 Universal](LICENSE.md) Creative
-Commons License - see the [LICENSE.md](LICENSE.md) file for details
+- **Wlad Paiva** - [EatingDots](http://eatingdots.com)
 
 ## Acknowledgments
 
-- Hat tip to anyone whose code is used
-- Inspiration
-- etc
+- Inspired by Stripe API
