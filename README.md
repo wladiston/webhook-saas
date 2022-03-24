@@ -8,7 +8,7 @@ This project is intended to provide some useful utilities for implementing a web
 - [x] Multiple URLs
 - [x] Sandbox and production environment
 - [x] Support for subscribe to internal events
-- [] Retry failed attempts
+- [ ] Retry failed attempts
 
 ## Installing
 
