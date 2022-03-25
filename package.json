@@ -1,6 +1,6 @@
 {
   "name": "webhook-saas",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A simple library to manage and create webhooks for your application",
   "main": "dist/index.min.cjs",
   "module": "dist/esm.min.js",
