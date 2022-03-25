@@ -28,7 +28,7 @@ export default [
   {
     // path to your declaration files root
     input: './dist/dts/index.d.ts',
-    output: [{file: 'dist/webook-sass.d.ts', format: 'es'}],
+    output: [{file: pkg.types, format: 'es'}],
     plugins: [dts()],
   },
 ]
